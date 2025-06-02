@@ -19,6 +19,9 @@ app.get('/combo', async (req, res) => {
   if (!model) {
     return res.status(500).json({ message: 'Generative model not initialized. Check server logs.' });
   }
+  let cleanedJson; // Declare here to make it accessible in the outer catch if needed, though primarily for inner.
+  let parsedData;  // Declare here
+
   try {
     const result = await model.generateContent(GEMINI_COMBO_PROMPT);
     const response = await result.response;
@@ -26,7 +29,7 @@ app.get('/combo', async (req, res) => {
 
     // Clean the response to ensure it's valid JSON
     // Gemini might sometimes return the JSON block within backticks and with "json" prefix
-    let cleanedJson = text.trim();
+    cleanedJson = text.trim(); // Assign to the higher-scoped variable
     if (cleanedJson.startsWith('```json')) {
       cleanedJson = cleanedJson.substring(7);
     }
@@ -35,7 +38,29 @@ app.get('/combo', async (req, res) => {
     }
     cleanedJson = cleanedJson.trim(); // Trim again after removing backticks
 
-    const parsedData = JSON.parse(cleanedJson);
+    try {
+      parsedData = JSON.parse(cleanedJson); // Assign to the higher-scoped variable
+    } catch (parseError) {
+      if (parseError instanceof SyntaxError) {
+        console.error('Error parsing JSON response from Gemini for /combo:', parseError, 'Raw text received:', cleanedJson);
+        return res.status(500).json({ message: 'Failed to parse game data from AI. The AI response was not valid JSON.', details: parseError.message });
+      }
+      throw parseError; // Re-throw if it's not a SyntaxError, to be caught by outer catch
+    }
+
+    // Validate the structure of parsedData for /combo
+    if (
+      !parsedData ||
+      typeof parsedData.emojis !== 'string' ||
+      typeof parsedData.correct_answer !== 'string' ||
+      !Array.isArray(parsedData.options) ||
+      parsedData.options.length !== 4 ||
+      !parsedData.options.every(opt => typeof opt === 'string')
+    ) {
+      console.error('Unexpected Gemini API response structure for /combo:', parsedData);
+      throw new Error('Unexpected Gemini API response structure for /combo');
+    }
+
     res.json(parsedData);
   } catch (error) {
     console.error('Error generating emoji combo:', error);
@@ -68,6 +93,12 @@ app.post('/hint', async (req, res) => {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const hintText = response.text().trim();
+
+    // Validate the structure of hintText for /hint
+    if (typeof hintText !== 'string' || hintText.length === 0) {
+      console.error('Unexpected Gemini API response structure for /hint (empty or not a string):', hintText);
+      throw new Error('Unexpected Gemini API response structure for /hint');
+    }
 
     res.json({ hint: hintText });
   } catch (error) {

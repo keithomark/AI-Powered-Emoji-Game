@@ -1,0 +1,115 @@
+[gd_scene load_steps=2 format=3 uid="uid://cjh70vu3voqhv"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main_gd"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main_gd")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 15
+
+[node name="TopBar" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+alignment = 1 # Center alignment for the content of TopBar itself if needed
+
+[node name="TimerLabel" type="Label" parent="VBoxContainer/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3 # Expand Fill
+text = "Time: 15"
+
+[node name="ScoreLabel" type="Label" parent="VBoxContainer/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3 # Expand Fill
+text = "Score: 0"
+horizontal_alignment = 2 # Right align text within Label
+
+[node name="EmojiDisplay" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3 # Expand Fill
+theme_override_font_sizes/font_size = 72
+text = "😃❓"
+horizontal_alignment = 1 # Center
+vertical_alignment = 1 # Center
+
+[node name="Options" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+alignment = 1 # Center the buttons within the HBox
+theme_override_constants/separation = 10
+
+[node name="Option1" type="Button" parent="VBoxContainer/Options"]
+layout_mode = 2
+size_flags_horizontal = 3 # Allow button to expand if HBox has extra space
+text = "Option 1"
+
+[node name="Option2" type="Button" parent="VBoxContainer/Options"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Option 2"
+
+[node name="Option3" type="Button" parent="VBoxContainer/Options"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Option 3"
+
+[node name="Option4" type="Button" parent="VBoxContainer/Options"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Option 4"
+
+[node name="Spacer" type="Control" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3 # Expand Fill to push HintButton down
+
+[node name="HintButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 0 # Default, let its own size dictate or anchor it
+size_flags_vertical = 0   # Default
+anchors_preset = -1 # No preset, use explicit anchoring if needed or rely on container
+anchor_left = 1.0   # Anchor to the right
+anchor_top = 1.0    # Anchor to the bottom
+anchor_right = 1.0  # Anchor to the right
+anchor_bottom = 1.0 # Anchor to the bottom
+offset_left = -88.0 # Adjust offset from right anchor (assuming button width ~88)
+offset_top = -40.0  # Adjust offset from bottom anchor (assuming button height ~40)
+grow_horizontal = 0 # Don't grow with parent
+grow_vertical = 0   # Don't grow with parent
+text = "Hint"
+
+[node name="HintPopup" type="PopupPanel" parent="."]
+title = "Hint" # Set a title for the popup window
+initial_position = 2 # Center of parent (Main node)
+size = Vector2i(300, 150) # Use Vector2i for size property of PopupPanel
+min_size = Vector2i(250, 100)
+layout_mode = 0 # Not part of the layout system in the same way
+
+[node name="HintText" type="Label" parent="HintPopup"]
+layout_mode = 1
+anchors_preset = 15 # Full rect
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "This is a hint. It might be long and needs to wrap around correctly."
+autowrap_mode = 3 # Word smart
+vertical_alignment = 1 # Center
+horizontal_alignment = 0 # Left (or 1 for Center, if preferred)
