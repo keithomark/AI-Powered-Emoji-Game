@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config(); // Load environment variables
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+// require('dotenv').config(); // dotenv is called in utils.js
+const { model } = require('./utils.js'); // Adjusted path
+const { GEMINI_COMBO_PROMPT, GEMINI_HINT_PROMPT_TEMPLATE } = require('./prompts.js'); // Adjusted path
 
 const app = express();
 
@@ -9,43 +10,17 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // For parsing application/json
 
-// Initialize Google Generative AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-
 // Routes
 app.get('/', (req, res) => {
   res.send('Welcome to the AI Emoji Game server!');
 });
 
 app.get('/combo', async (req, res) => {
+  if (!model) {
+    return res.status(500).json({ message: 'Generative model not initialized. Check server logs.' });
+  }
   try {
-    const prompt = `
-      Generate a two-emoji combination that represents a common phrase, movie, book, or concept.
-      Also provide one correct answer for what the emojis represent, and three plausible but incorrect distractor options.
-      Return the output as a JSON object with the following structure:
-      {
-        "emojis": "String of two emojis",
-        "correct_answer": "String of the correct answer",
-        "options": ["Array of four strings: one correct answer and three distractors, shuffled"]
-      }
-      Ensure the options array is shuffled.
-      For example:
-      {
-        "emojis": "🧑‍🍳💋",
-        "correct_answer": "Chef's Kiss",
-        "options": ["Chef's Kiss", "Cooking Love", "Kiss the Cook", "Delicious Food"]
-      }
-      Another example:
-      {
-        "emojis": "💔➡️",
-        "correct_answer": "Heartbreak to Healing",
-        "options": ["Heartbreak to Healing", "Broken Arrow", "Love Hurts then Moves On", "Sad Direction"]
-      }
-      Ensure the response is only the JSON object, with no other text before or after it.
-    `;
-
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(GEMINI_COMBO_PROMPT);
     const response = await result.response;
     const text = response.text();
 
@@ -84,14 +59,11 @@ app.post('/hint', async (req, res) => {
       return res.status(400).json({ message: 'Phrase is required in the request body.' });
     }
 
-    const prompt = `
-      Provide a short, non-obvious hint for the following phrase. The phrase might be a word, a common saying, a movie title, a book title, or a general concept.
-      The hint should be clever and not give away the answer directly. Aim for 1-2 sentences.
+    if (!model) {
+      return res.status(500).json({ message: 'Generative model not initialized. Check server logs.' });
+    }
 
-      Phrase: "${phrase}"
-
-      Hint:
-    `;
+    const prompt = GEMINI_HINT_PROMPT_TEMPLATE.replace('{USER_PHRASE}', phrase);
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
