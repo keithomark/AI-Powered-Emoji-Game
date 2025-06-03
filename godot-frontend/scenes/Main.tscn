@@ -1,6 +1,118 @@
-[gd_scene load_steps=2 format=3 uid="uid://cjh70vu3voqhv"]
+[gd_scene load_steps=8 format=3 uid="uid://cjh70vu3voqhv"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main_gd"]
+[ext_resource type="Theme" uid="uid://c2vj7q0x0x7vx" path="res://assets/modern_theme.tres" id="2_theme"]
+
+[sub_resource type="Animation" id="Animation_loading_indicator"]
+resource_name = "loading_indicator_anim"
+length = 0.9
+loop_mode = 1 # Loop
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("../EmojiDisplay:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("../EmojiDisplay:text")
+tracks/1/interp = 1 # Discrete steps
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.3, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1, # Discrete
+"values": ["Loading.", "Loading..", "Loading..."]
+}
+
+[sub_resource type="Animation" id="Animation_change_emoji"]
+resource_name = "change_emoji_content"
+length = 0.25
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("../EmojiDisplay:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+tracks/1/type = "method"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("../..")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0.25),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [],
+"method": &"_on_emoji_fade_out_complete"
+}]
+}
+
+[sub_resource type="Animation" id="Animation_hint_popup"]
+resource_name = "hint_popup_appear"
+length = 0.3
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("../../HintPopup:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(0.8, 0.8), Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("../../HintPopup:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_emoji_fade_in"]
+resource_name = "emoji_fade_in"
+length = 0.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("../EmojiDisplay:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_main"]
+_data = {
+"change_emoji_content": SubResource("Animation_change_emoji"),
+"emoji_fade_in": SubResource("Animation_emoji_fade_in"),
+"hint_popup_appear": SubResource("Animation_hint_popup"),
+"loading_indicator_anim": SubResource("Animation_loading_indicator")
+}
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -10,6 +122,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_main_gd")
+theme = ExtResource("2_theme")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -26,12 +139,27 @@ theme_override_constants/separation = 15
 
 [node name="TopBar" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
-alignment = 1 # Center alignment for the content of TopBar itself if needed
+# Consider changing alignment to BEGIN or END if buttons on one side are preferred
+# alignment = 1 # Center alignment for the content of TopBar itself if needed
+
+[node name="HowToPlayButton" type="Button" parent="VBoxContainer/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 2 # Shrink Center, or 0 for Shrink Begin
+text = "How to Play"
 
 [node name="TimerLabel" type="Label" parent="VBoxContainer/TopBar"]
 layout_mode = 2
-size_flags_horizontal = 3 # Expand Fill
+size_flags_horizontal = 1 # Fill, but allow shrink
 text = "Time: 15"
+
+[node name="VisualTimer" type="TextureProgressBar" parent="VBoxContainer/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3 # Expand Fill
+size_flags_vertical = 1 # Center align vertically if TopBar has extra height
+min_value = 0.0
+max_value = 15.0
+value = 15.0
+fill_mode = 4 # FILL_RIGHT_TO_LEFT
 
 [node name="ScoreLabel" type="Label" parent="VBoxContainer/TopBar"]
 layout_mode = 2
@@ -40,12 +168,18 @@ text = "Score: 0"
 horizontal_alignment = 2 # Right align text within Label
 
 [node name="EmojiDisplay" type="Label" parent="VBoxContainer"]
+modulate = Color(1, 1, 1, 0)
 layout_mode = 2
 size_flags_vertical = 3 # Expand Fill
 theme_override_font_sizes/font_size = 72
 text = "😃❓"
 horizontal_alignment = 1 # Center
 vertical_alignment = 1 # Center
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VBoxContainer"]
+libraries = {
+"": SubResource("AnimationLibrary_main")
+}
 
 [node name="Options" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
@@ -92,6 +226,7 @@ grow_vertical = 0   # Don't grow with parent
 text = "Hint"
 
 [node name="HintPopup" type="PopupPanel" parent="."]
+modulate = Color(1, 1, 1, 0)
 title = "Hint" # Set a title for the popup window
 initial_position = 2 # Center of parent (Main node)
 size = Vector2i(300, 150) # Use Vector2i for size property of PopupPanel
