@@ -9,6 +9,10 @@ extends Control
 @onready var hint_text = $HintPopup/HintText
 @onready var http_request = HTTPRequest.new()
 
+@onready var click_sound = AudioStreamPlayer.new()
+@onready var correct_sound = AudioStreamPlayer.new()
+@onready var wrong_sound = AudioStreamPlayer.new()
+
 var backend_url = "http://localhost:3000"
 var current_phrase = "" # This will store the correct answer string
 var score = 0
@@ -22,6 +26,14 @@ func _ready():
         btn.connect("pressed", Callable(self, "_on_option_pressed").bind(btn))
     # Connect the main request_completed signal here for combo responses initially
     http_request.connect("request_completed", Callable(self, "_on_combo_request_completed"))
+
+    click_sound.stream = load("res://assets/click.wav")
+    correct_sound.stream = load("res://assets/correct.wav")
+    wrong_sound.stream = load("res://assets/wrong.wav")
+    add_child(click_sound)
+    add_child(correct_sound)
+    add_child(wrong_sound)
+
     start_new_round()
 
 func start_new_round():
@@ -46,11 +58,13 @@ func _process(delta):
         timer_label.text = "Time: " + str(int(max(0,timer_sec))) # Ensure time doesn't go negative
         if timer_sec <= 0:
             timer_active = false
+            wrong_sound.play() # Play wrong sound when timer expires
             show_correct_answer_feedback(false) # Pass false as it's a timeout
             await get_tree().create_timer(1.5).timeout
             start_new_round()
 
 func _on_hint_button_pressed():
+    click_sound.play() # Play click sound when hint button is pressed
     if current_phrase == "" or not timer_active: # Also check if timer is active
         return
 
@@ -152,5 +166,28 @@ func show_correct_answer_feedback(is_correct_choice):
 
 # Note: Resetting colors is handled by start_new_round calling remove_theme_color_override.
 # The await get_tree().create_timer(1.5).timeout in _on_option_pressed handles the delay before next round.
+
+
+func _on_option_pressed(button_pressed):
+    if not timer_active: # Ignore presses if timer is not active (e.g., during feedback or loading)
+        return
+
+    click_sound.play()
+    timer_active = false # Stop timer once an option is pressed
+
+    if button_pressed.text == current_phrase:
+        score += 1
+        score_label.text = "Score: " + str(score)
+        correct_sound.play()
+        show_correct_answer_feedback(true)
+    else:
+        wrong_sound.play()
+        show_correct_answer_feedback(false)
+
+    # Disable hint button after an answer is chosen
+    hint_button.disabled = true
+
+    await get_tree().create_timer(1.5).timeout # Wait before starting new round
+    start_new_round()
 
 ```
