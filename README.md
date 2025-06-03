@@ -30,3 +30,5 @@ Further details will be added as the frontend is developed.
 
 ---
 This project is for demonstration and learning purposes.
+
+**Note:** Due to automated process limitations, remote branches other than the main development line need to be manually reviewed and deleted from the GitHub repository.
